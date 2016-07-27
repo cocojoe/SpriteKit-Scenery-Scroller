@@ -9,14 +9,20 @@
 import SpriteKit
 
 class GameScene: SKScene {
+    
+    /* Scene connections */
+    var scrollLayer: SKNode!
+    
+    /* Game constants */
+    let fixedDelta: CFTimeInterval = 1.0/60.0 /* 60 FPS */
+    let scrollSpeed: CGFloat = 120
+    
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
-        let myLabel = SKLabelNode(fontNamed:"Chalkduster")
-        myLabel.text = "Hello, World!"
-        myLabel.fontSize = 45
-        myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame))
         
-        self.addChild(myLabel)
+        /* Set reference to scroll layer node */
+        scrollLayer = self.childNodeWithName("scrollLayer")
+
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
@@ -24,22 +30,35 @@ class GameScene: SKScene {
         
         for touch in touches {
             let location = touch.locationInNode(self)
-            
-            let sprite = SKSpriteNode(imageNamed:"Spaceship")
-            
-            sprite.xScale = 0.5
-            sprite.yScale = 0.5
-            sprite.position = location
-            
-            let action = SKAction.rotateByAngle(CGFloat(M_PI), duration:1)
-            
-            sprite.runAction(SKAction.repeatActionForever(action))
-            
-            self.addChild(sprite)
+            print(location)
         }
     }
    
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
+        scrollWorld()
+    }
+    
+    func scrollWorld() {
+        /* Scroll World */
+        
+        scrollLayer.position.x -= scrollSpeed * CGFloat(fixedDelta)
+        
+        /* Loop through scroll layer nodes */
+        for ground in scrollLayer.children as! [SKSpriteNode] {
+            
+            /* Get ground node position, convert node position to scene space */
+            let groundPosition = scrollLayer.convertPoint(ground.position, toNode: self)
+            
+            /* Check if ground sprite has left the scene */
+            if groundPosition.x <= -ground.size.width / 2 {
+                
+                /* Reposition ground sprite to the second starting position */
+                let newPosition = CGPointMake( (self.size.width / 2) + ground.size.width, groundPosition.y)
+                
+                /* Convert new node position back to scroll layer space */
+                ground.position = self.convertPoint(newPosition, toNode: scrollLayer)
+            }
+        }
     }
 }
